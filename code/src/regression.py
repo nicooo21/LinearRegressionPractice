@@ -9,6 +9,8 @@ import numpy as np
 # matplotlib libraries
 import matplotlib.pyplot as plt
 
+import math
+
 ######################################################################
 # classes
 ######################################################################
@@ -109,12 +111,27 @@ class PolynomialRegression() :
         
         ### ========== TODO : START ========== ###
         # part b: modify to create matrix for simple linear model
+        print 'Starting part b...'
+        print('Input is a %dx%d Matrix' % (n, d))
+        # print X
+        print 'Creating Column of 1s...'
+        X0 = np.ones((n,1))
+        # print Phi
+        Phi = X0
         # part g: modify to create matrix for polynomial model
-        Phi = X
+    
         m = self.m_
+        print m
         
+        print X
+
+        for i in range(1, m + 1):
+            X_temp = X**i
+            Phi = np.hstack((Phi, X_temp))
         ### ========== TODO : END ========== ###
         
+        print Phi
+
         return Phi
     
     
@@ -147,6 +164,8 @@ class PolynomialRegression() :
             plt.ion()
             plt.show()
         
+        X_orig = X
+
         X = self.generate_polynomial_features(X) # map features
         n,d = X.shape
         eta_input = eta
@@ -160,7 +179,7 @@ class PolynomialRegression() :
             # change the default eta in the function signature to 'eta=None'
             # and update the line below to your learning rate function
             if eta_input is None :
-                eta = None # change this line
+                eta = 1/(float)(1+t) # change this line
             else :
                 eta = eta_input
             ### ========== TODO : END ========== ###
@@ -168,10 +187,17 @@ class PolynomialRegression() :
             ### ========== TODO : START ========== ###
             # part d: update theta (self.coef_) using one step of GD
             # hint: you can write simultaneously update all theta using vector math
-                
+
+            print 'starting d...'
+            y_pred = self.predict(X_orig)
+            mult = np.dot(y_pred - y, X)
+            self.coef_ -= 2*eta*mult
+            
+            
+            
             # track error
             # hint: you cannot use self.predict(...) to make the predictions
-            y_pred = y # change this line
+            # y_pred = y # change this line
             err_list[t] = np.sum(np.power(y - y_pred, 2)) / float(n)                
             ### ========== TODO : END ========== ###
             
@@ -194,6 +220,8 @@ class PolynomialRegression() :
                 plt.pause(0.05) # pause for 0.05 sec
         
         print 'number of iterations: %d' % (t+1)
+        print self.coef_
+        print self.cost(X_orig, y)
         
         return self
     
@@ -216,10 +244,14 @@ class PolynomialRegression() :
         
         X = self.generate_polynomial_features(X) # map features
         
+        
         ### ========== TODO : START ========== ###
         # part e: implement closed-form solution
         # hint: use np.dot(...) and np.linalg.pinv(...)
         #       be sure to update self.coef_ with your solution
+
+        self.coef_ = np.dot(np.dot(np.linalg.inv((np.dot(np.transpose(X), X))), np.transpose(X)), y)
+        print self.coef_
         
         ### ========== TODO : END ========== ###
     
@@ -243,11 +275,16 @@ class PolynomialRegression() :
         
         ### ========== TODO : START ========== ###
         # part c: predict y
-        y = None
+        n,d = X.shape
+        print ('X is a %dx%d matrix' % (n, d))
+        n = self.coef_.shape
+        print ('coef is a %dx1 matrix' % n)
+        print ('Computing Dot Product...')
+        y = np.dot(X, self.coef_)
+        # print y
         ### ========== TODO : END ========== ###
         
         return y
-    
     
     def cost(self, X, y) :
         """
@@ -264,7 +301,16 @@ class PolynomialRegression() :
         """
         ### ========== TODO : START ========== ###
         # part d: compute J(theta)
+        n, d = X.shape
         cost = 0
+        print ('X is a %dx%d matrix' % (n, d))
+        print ('Computing Cost...')
+        n = y.shape
+        print ('y is a %dx1 matrix' % n)
+        y_pred = self.predict(X)
+        for i in range(0, n[0]):
+            cost += (y_pred[i] - y[i])**2
+
         ### ========== TODO : END ========== ###
         return cost
     
@@ -282,9 +328,12 @@ class PolynomialRegression() :
         --------------------
             error   -- float, RMSE
         """
+
+        n, d = X.shape
+
         ### ========== TODO : START ========== ###
         # part h: compute RMSE
-        error = 0
+        error = np.sqrt(self.cost(X, y)/n)
         ### ========== TODO : END ========== ###
         return error
     
@@ -315,6 +364,7 @@ def main() :
     
     ### ========== TODO : START ========== ###
     # part a: main code for visualizations
+    '''
     print 'Starting part a...'
     print 'Visualizing data...'
     print 'Using plot_data for Training Data...'
@@ -322,7 +372,7 @@ def main() :
     print 'Using plot_data for Testing Data...'
     plot_data(test_data.X, test_data.y)
     print 'Ending part a...'
-    
+    '''
     ### ========== TODO : END ========== ###
     
     
@@ -330,7 +380,23 @@ def main() :
     ### ========== TODO : START ========== ###
     # parts b-f: main code for linear regression
     print 'Investigating linear regression...'
+    print 'Initializing Polynomial Regression...'
+    p_reg = PolynomialRegression()
+    print 'Linear Model for Training Data...'
+    X_features = p_reg.generate_polynomial_features(train_data.X)
+    print 'Finishing part b...'
     
+    print 'Testing part c...'
+    train_data = load_data('regression_train.csv')
+    model = PolynomialRegression(m=3)
+    model.generate_polynomial_features(train_data.X)
+    # model.coef_ = np.zeros(2)
+    # print model.cost(train_data.X, train_data.y)
+
+    # model.fit_GD(train_data.X, train_data.y, eta = 0.0001)
+    # model.fit(train_data.X, train_data.y)
+    # print model.cost(train_data.X, train_data.y)
+    # model.fit_GD(train_data.X, train_data.y)
     ### ========== TODO : END ========== ###
     
     
@@ -338,7 +404,27 @@ def main() :
     ### ========== TODO : START ========== ###
     # parts g-i: main code for polynomial regression
     print 'Investigating polynomial regression...'
-        
+    training_error = []
+    testing_error = []
+    x_values = list(range(0, 11))
+    for i in range(0, 11):
+        model = PolynomialRegression(m = i)
+        model.fit(train_data.X, train_data.y)
+        training_error.append(model.rms_error(train_data.X, train_data.y))
+        testing_error.append(model.rms_error(test_data.X, test_data.y))
+    
+    print training_error
+    print testing_error
+
+    plt.plot(x_values, training_error, 'bo', label = 'Train RMSE')
+    plt.plot(x_values, testing_error, 'ro', label = 'Test RMSE')
+    plt.legend()
+    plt.xlabel('M-Degree Polynomial')
+    plt.ylabel('RMSE Error')
+    plt.show()
+    
+
+
     ### ========== TODO : END ========== ###
     
     
